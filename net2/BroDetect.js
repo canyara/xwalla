@@ -764,9 +764,10 @@ module.exports = class {
       let origMac = obj["orig_l2_addr"];
       let respMac = obj["resp_l2_addr"];
       let localMac = null;
+      let otherMac = null;
       let intfId = null;
 
-      log.debug("ProcessingConection:", obj.uid, host, dst);
+      log.debug("ProcessingConection2:", obj.uid, host, dst);
 
       // ignore multicast IP
       // if (sysManager.isMulticastIP(dst) || sysManager.isDNS(dst) || sysManager.isDNS(host)) {
@@ -818,6 +819,8 @@ module.exports = class {
         if (!sysManager.isMyIP(lhost) && lhost !== sysManager.myIp2() && !(sysManager.isMyIP6(lhost))) {
           log.info("Discard incorrect local MAC address from bro log: ", localMac, lhost);
           localMac = null; // discard local mac from bro log since it is not correct
+        } else {
+          otherMac = localMac.toUpperCase();
         }
       }
       if (!localMac) {
@@ -837,6 +840,10 @@ module.exports = class {
       }
       if (!localMac || localMac.constructor.name !== "String") {
         return;
+      }
+
+      if (!otherMac) {
+        otherMac = origMac === localMac ? respMac.toUpperCase() : origMac.toUpperCase();
       }
 
       const intfInfo = sysManager.getInterfaceViaIP4(lhost);
@@ -1434,7 +1441,7 @@ module.exports = class {
 
 
   async processNoticeData(data) {
-    if(!fc.isFeatureOn("cyber_security")) return;
+    if (!fc.isFeatureOn("cyber_security")) return;
     try {
       let obj = JSON.parse(data);
       if (obj.note == null) {

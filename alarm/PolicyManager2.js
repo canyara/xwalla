@@ -82,7 +82,7 @@ const simpleRuleSetMap = {
 }
 
 class PolicyManager2 {
-  constructor() {
+  constructor({ listenDeviceGroup }) {
     if (instance == null) {
       instance = this;
 
@@ -95,6 +95,20 @@ class PolicyManager2 {
       }
 
       this.enabledTimers = {}
+
+      if (listenDeviceGroup) {
+        sclient.on("message", (channel, message) => {
+          log.info("Msg", channel, message);
+          switch (channel) {
+            case "DeviceGroup:Update":
+              break;
+            default:
+              break;
+          }
+        });
+
+        sclient.subscribe("DeviceGroup:Update");
+      }
 
     }
     return instance;
