@@ -97,16 +97,36 @@ class DeviceGroupManager {
 
             //@TODO update policy
             await rclient.delAsync(deviceGroupKey);
-            await pclient.publishAsync("DeviceGroup:Update", ""); 
+            await pclient.publishAsync("DeviceGroup:Update", "");
         } catch (error) {
             log.error("Failed delDeviceGroup: " + err);
-            throw error; 
+            throw error;
         }
     }
 
     async getAllDeviceGroup() {
         try {
-            let deviceGroupsKeys = await rclient.keysAsync(DeviceGroup.PREFIX + '*') 
+            let deviceGroups = [];
+            let deviceGroupsKeys = await rclient.keysAsync(DeviceGroup.PREFIX + '*');
+            if (deviceGroupsKeys && deviceGroupsKeys.length > 0) {
+                let multi = rclient.multi();
+                for (let index = 0; index < deviceGroupsKeys.length; index++) {
+                    const dgKey = deviceGroupsKeys[index];
+                    multi.hgetall(dgKey);
+                }
+
+                let result = await multi.execAsync();
+                for (let index = 0; index < result.length; index++) {
+                    const deviceGroup = result[index];
+                    if (deviceGroup) {
+                        let dg = new DeviceGroup(deviceGroup);
+                        deviceGroups.push(dg);
+                    }
+                }
+
+            }
+
+            return deviceGroups;
         } catch (error) {
             log.error("Failed getAllDeviceGroup: " + err);
             throw error;
@@ -120,12 +140,12 @@ class DeviceGroupManager {
             let deviceGroupKey = DeviceGroup.PREFIX + deviceGroupId;
 
             await rclient.delAsync(deviceGroupKey);
-            await pclient.publishAsync("DeviceGroup:Update", ""); 
+            await pclient.publishAsync("DeviceGroup:Update", "");
             //@TODO update policy
         } catch (error) {
             log.error("Failed delDeviceGroup: " + err);
-            throw error; 
-        } 
+            throw error;
+        }
     }
 
     async saveDeviceGroup(deviceGroup) {
@@ -135,12 +155,12 @@ class DeviceGroupManager {
                 let deviceGroup.id = await this.getNextID();
             }
 
-            deviceGroup.id = id + ""; 
+            deviceGroup.id = id + "";
 
             let deviceGroupKey = DeviceGroup.PREFIX + id;
 
             await rclient.hmsetAsync(deviceGroupKey, deviceGroup.redisfy());
-            await pclient.publishAsync("DeviceGroup:Update", ""); 
+            await pclient.publishAsync("DeviceGroup:Update", "");
             //@TODO update policy
         } catch (error) {
             log.error("Failed saveDeviceGroup: " + err);
@@ -148,7 +168,7 @@ class DeviceGroupManager {
         }
     }
 
-    
+
 
 };
 
